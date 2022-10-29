@@ -5,10 +5,10 @@ from fastapi import APIRouter
 from sqlalchemy import func, select
 
 # get database models
-from .db import models
+from ..db import models
 
 # get async engine
-from .db.database import ASYNC_ENGINE, ASYNC_SESSION
+from ..db.database import ASYNC_ENGINE, ASYNC_SESSION
 
 router = APIRouter()
 
