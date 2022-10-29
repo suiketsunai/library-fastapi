@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+ psqldb:
+  image: postgres:15.0-alpine3.16
+  container_name: librarypsql
+  environment:
+    - POSTGRES_USER=${DB_USER}
+    - POSTGRES_PASSWORD=${DB_PASSWORD}
+    - POSTGRES_PORT=${DB_PORT}
+    - POSTGRES_SERVER=${DB_SERVER}
+    - POSTGRES_DB=${DB_DB}
+  ports:
+    - ${DB_PORT:-5432}:5432
+  volumes:
+    - library_data:/var/lib/postgresql/data/
+  restart: on-failure
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres"]
+    start_period: 5s
+    interval: 5s
+    timeout: 5s
+    retries: 5
+
+ web:
+  build:
+    context: .
+    tags:
+    - "suiketsunai/library-fastapi:${TAG:-latest}"
+    - "suiketsunai/library-fastapi:latest"
+  container_name: libraryweb
+  ports:
+    - ${PORT:-80}:80
+  restart: on-failure
+  volumes:
+    - .:/app
+  depends_on:
+    psqldb:
+      condition: service_healthy
+
+volumes:
+  library_data:
