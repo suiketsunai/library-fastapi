@@ -15,10 +15,6 @@ router = APIRouter()
 
 @router.on_event("startup")
 async def init_models():
-    """Temporary function for creating tables"""
-    async with ASYNC_ENGINE.begin() as conn:
-        await conn.run_sync(models.Base.metadata.create_all)
-
     async with ASYNC_SESSION() as session:
         # quit if records exists
         if await session.scalar(select(func.count(models.Book.id))):

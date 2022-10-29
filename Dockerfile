@@ -45,4 +45,5 @@ RUN pip3 install poetry
 RUN poetry update && poetry install --without dev
 
 # Run alembic migrations & app
-CMD poetry run python3 main.py ;
+CMD alembic upgrade head \
+    && python3 main.py ;
