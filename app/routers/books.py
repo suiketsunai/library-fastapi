@@ -20,7 +20,7 @@ from sqlalchemy.orm import selectinload
 from ..db import models, schemas
 
 # book filter
-from ..db.filters import BookFilter, AuthorFilter
+from ..db.filters import AuthorFilter, BookFilter
 
 # other dependencies
 from ..dependencies import (

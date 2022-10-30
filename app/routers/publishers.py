@@ -18,7 +18,7 @@ from sqlalchemy.orm import selectinload
 from ..db import models, schemas
 
 # publisher filter
-from ..db.filters import PublisherFilter, BookFilter
+from ..db.filters import BookFilter, PublisherFilter
 
 # other dependencies
 from ..dependencies import (
