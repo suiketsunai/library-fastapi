@@ -64,7 +64,7 @@ async def read_publisher(
     publisher_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         publisher := (
             await session.get(
                 models.Publisher,
@@ -72,7 +72,7 @@ async def read_publisher(
                 [selectinload(models.Publisher.books)],
             )
         )
-    ) is None:
+    ):
         await raise_404("publisher")
     return publisher
 
@@ -101,13 +101,13 @@ async def update_publisher(
     publisher: schemas.PublisherCreate = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         updated_publisher := await session.get(
             models.Publisher,
             publisher_id,
             with_for_update=True,
         )
-    ) is None:
+    ):
         await raise_404("publisher")
     for key, value in publisher:
         setattr(updated_publisher, key, value)
@@ -125,13 +125,13 @@ async def patch_publisher(
     publisher: schemas.PublisherPatch = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         patched_publisher := await session.get(
             models.Publisher,
             publisher_id,
             with_for_update=True,
         )
-    ) is None:
+    ):
         await raise_404("publisher")
     for key, value in publisher.dict(exclude_none=True).items():
         setattr(patched_publisher, key, value)
@@ -148,14 +148,14 @@ async def delete_publisher(
     publisher_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         deleted_publisher := await session.get(
             models.Publisher,
             publisher_id,
             [selectinload(models.Publisher.books)],
             with_for_update=True,
         )
-    ) is None:
+    ):
         await raise_404("publisher")
     await session.delete(deleted_publisher)
     await session.commit()

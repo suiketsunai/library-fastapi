@@ -62,7 +62,7 @@ async def read_author(
     author_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         author := (
             await session.get(
                 models.Author,
@@ -70,7 +70,7 @@ async def read_author(
                 [selectinload(models.Author.books)],
             )
         )
-    ) is None:
+    ):
         await raise_404("author")
     return author
 
@@ -99,13 +99,13 @@ async def update_author(
     author: schemas.AuthorCreate = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         updated_author := await session.get(
             models.Author,
             author_id,
             with_for_update=True,
         )
-    ) is None:
+    ):
         await raise_404("author")
     for key, value in author:
         setattr(updated_author, key, value)
@@ -123,13 +123,13 @@ async def patch_author(
     author: schemas.AuthorPatch = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         patched_author := await session.get(
             models.Author,
             author_id,
             with_for_update=True,
         )
-    ) is None:
+    ):
         await raise_404("author")
     for key, value in author.dict(exclude_none=True).items():
         setattr(patched_author, key, value)
@@ -146,14 +146,14 @@ async def delete_author(
     author_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         deleted_author := await session.get(
             models.Author,
             author_id,
             [selectinload(models.Author.books)],
             with_for_update=True,
         )
-    ) is None:
+    ):
         await raise_404("author")
     await session.delete(deleted_author)
     await session.commit()

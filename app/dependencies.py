@@ -36,6 +36,19 @@ async def raise_404(table: str):
     )
 
 
+# raise 404 list
+async def raise_404_list(table: str, ids: list[int]):
+    raise HTTPException(
+        status.HTTP_404_NOT_FOUND,
+        detail=[
+            {
+                "msg": f"No such {table}: {ids}.",
+                "type": f"not_found.{table}",
+            }
+        ],
+    )
+
+
 # get async session
 async def get_session() -> AsyncSession:
     async with ASYNC_SESSION() as session:

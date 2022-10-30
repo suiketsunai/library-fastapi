@@ -82,8 +82,6 @@ class BookBase(BaseModel):
 
 
 class BookCreate(BookBase):
-    # authors: list[Author]
-    # publisher: int
     pass
 
 

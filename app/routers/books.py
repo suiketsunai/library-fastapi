@@ -1,5 +1,7 @@
+from typing import Optional
+
 # API
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 # pagination
 from fastapi_pagination import Page
@@ -25,6 +27,7 @@ from ..dependencies import (
     CustomFilterDepends,
     get_session,
     raise_404,
+    raise_404_list,
     response_404,
 )
 
@@ -33,6 +36,14 @@ router = APIRouter(
     tags=["Book"],
     dependencies=[Depends(get_session)],
 )
+
+
+async def check_authors(session: AsyncSession, author_ids: list[int]):
+    return (
+        await session.scalars(
+            select(models.Author).where(models.Author.id.in_(author_ids))
+        )
+    ).all()
 
 
 @router.get(
@@ -65,7 +76,7 @@ async def read_book(
     book_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         book := (
             await session.get(
                 models.Book,
@@ -76,68 +87,138 @@ async def read_book(
                 ],
             )
         )
-    ) is None:
+    ):
         await raise_404("book")
     return book
 
 
 @router.post(
     "/",
-    response_model=schemas.Book,
+    response_model=schemas.Book_All,
     responses=response_404,
 )
 async def create_book(
     book: schemas.BookCreate = Depends(),
+    publisher_id: int = Query(title="publisher_id"),
+    author_ids: list[int] = Query(
+        title="authors",
+        min_items=1,
+        unique_items=True,
+        gt=0,
+    ),
     session: AsyncSession = Depends(get_session),
 ):
-    session.add(new_book := models.Book(**book.dict()))
-    await session.commit()
-    return new_book
+    if not (publisher := await session.get(models.Publisher, publisher_id)):
+        await raise_404("publisher")
+    if len(author_ids) == len(
+        authors := await check_authors(session, author_ids)
+    ):
+        session.add(
+            new_book := models.Book(
+                **book.dict(),
+                publisher=publisher,
+                authors=authors,
+            )
+        )
+        await session.commit()
+        return new_book
+    await raise_404_list(
+        "author",
+        set(author_ids) - set(a.id for a in authors),
+    )
 
 
 @router.put(
     "/{book_id}",
-    response_model=schemas.Book,
+    response_model=schemas.Book_All,
     responses=response_404,
 )
 async def update_book(
     book_id: int,
     book: schemas.BookCreate = Depends(),
+    publisher_id: int = Query(title="publisher_id"),
+    author_ids: list[int] = Query(
+        title="authors",
+        min_items=1,
+        unique_items=True,
+        gt=0,
+    ),
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         updated_book := await session.get(
             models.Book,
             book_id,
+            [
+                selectinload(models.Book.authors),
+                selectinload(models.Book.publisher),
+            ],
             with_for_update=True,
         )
-    ) is None:
+    ):
         await raise_404("book")
-    for key, value in book:
-        setattr(updated_book, key, value)
-    await session.commit()
-    return updated_book
+    if not (publisher := await session.get(models.Publisher, publisher_id)):
+        await raise_404("publisher")
+    if len(author_ids) == len(
+        authors := await check_authors(session, author_ids)
+    ):
+        for key, value in book:
+            setattr(updated_book, key, value)
+        updated_book.publisher, updated_book.authors = publisher, authors
+        await session.commit()
+        return updated_book
+    await raise_404_list(
+        "author",
+        set(author_ids) - set(a.id for a in authors),
+    )
 
 
 @router.patch(
     "/{book_id}",
-    response_model=schemas.Book,
+    response_model=schemas.Book_All,
     responses=response_404,
 )
 async def patch_book(
     book_id: int,
     book: schemas.BookPatch = Depends(),
+    publisher_id: Optional[int] = Query(None, title="publisher_id"),
+    author_ids: Optional[list[int]] = Query(
+        None,
+        title="authors",
+        min_items=1,
+        unique_items=True,
+        gt=0,
+    ),
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         patched_book := await session.get(
             models.Book,
             book_id,
+            [
+                selectinload(models.Book.authors),
+                selectinload(models.Book.publisher),
+            ],
             with_for_update=True,
         )
-    ) is None:
+    ):
         await raise_404("book")
-    for key, value in book.dict(exclude_none=True).items():
+    if publisher_id:
+        if publisher := await session.get(models.Publisher, publisher_id):
+            patched_book.publisher = publisher
+        else:
+            await raise_404("publisher")
+    if author_ids:
+        if len(author_ids) == len(
+            authors := await check_authors(session, author_ids)
+        ):
+            patched_book.authors = authors
+        else:
+            await raise_404_list(
+                "author",
+                set(author_ids) - set(a.id for a in authors),
+            )
+    for key, value in book.dict(exclude_none=True):
         setattr(patched_book, key, value)
     await session.commit()
     return patched_book
@@ -152,14 +233,17 @@ async def delete_book(
     book_id: int,
     session: AsyncSession = Depends(get_session),
 ):
-    if (
+    if not (
         deleted_book := await session.get(
             models.Book,
             book_id,
-            [selectinload(models.Book.books)],
+            [
+                selectinload(models.Book.authors),
+                selectinload(models.Book.publisher),
+            ],
             with_for_update=True,
         )
-    ) is None:
+    ):
         await raise_404("book")
     await session.delete(deleted_book)
     await session.commit()
