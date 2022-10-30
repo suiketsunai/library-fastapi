@@ -82,7 +82,14 @@ class BookBase(BaseModel):
 
 
 class BookCreate(BookBase):
-    publisher_id: int
+    # authors: list[Author]
+    # publisher: int
+    pass
+
+
+class BookPatch(BookBase):
+    title: Optional[str]
+    year: Optional[int]
 
 
 class Book(BookBase, BookAuto):
@@ -94,11 +101,11 @@ class Book(BookBase, BookAuto):
 
 
 class Book_Authors(Book):
-    authors: list[Author] = Field(min_items=1, unique_items=True)
+    authors: list[Author] = Field([], unique_items=True)
 
 
 class Book_Publisher(Book):
-    publisher: Publisher
+    publisher: Publisher = None
 
 
 class Book_All(Book_Authors, Book_Publisher):
