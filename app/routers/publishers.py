@@ -10,11 +10,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # get sqlalchemy loading strategy
 from sqlalchemy.orm import selectinload
 
-# database
+# pagination
+from fastapi_pagination import Page
+from fastapi_pagination.ext.async_sqlalchemy import paginate
+
+# filter dependency
+from fastapi_filter import FilterDepends
+
+# database models and schemas
 from ..db import models, schemas
 
-# dependencies
+# publisher filter
+from ..db.filters import PublisherFilter
+
+# other dependencies
 from ..dependencies import error_json_response, get_session, response_404
+
 
 router = APIRouter(
     prefix="/publishers",
@@ -25,17 +36,23 @@ router = APIRouter(
 
 @router.get(
     "/",
-    response_model=list[schemas.Publisher_Books],
-    responses={},
+    response_model=Page[schemas.Publisher_Books],
+    responses=response_404,
 )
-async def read_publishers(session: AsyncSession = Depends(get_session)):
-    return (
-        await session.scalars(
-            select(models.Publisher).options(
-                selectinload(models.Publisher.books)
+async def read_publishers(
+    _filter: PublisherFilter = FilterDepends(PublisherFilter),
+    session: AsyncSession = Depends(get_session),
+):
+    return await paginate(
+        session,
+        _filter.sort(
+            _filter.filter(
+                select(models.Publisher).options(
+                    selectinload(models.Publisher.books)
+                )
             )
-        )
-    ).all()
+        ),
+    )
 
 
 @router.get(

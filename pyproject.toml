@@ -6,13 +6,15 @@ authors = ["Suiketsu Iranai <nvrmndr.desu@yandex.ru>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.12"
 fastapi = "^0.85.1"
 uvicorn = {extras = ["standard"], version = "^0.19.0"}
-sqlalchemy = {extras = ["asyncio"], version = "^1.4.42"}
+sqlalchemy = {extras = ["asyncio"], version = "<=1.4.41"}
 asyncpg = "^0.27.0"
 sqlalchemy-repr = "^0.1.0"
 alembic = "^1.8.1"
+fastapi-pagination = {extras = ["all"], version = "^0.10.0"}
+fastapi-filter = {extras = ["all"], version = "^0.3.4"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
