@@ -1,9 +1,6 @@
 # API
 from fastapi import APIRouter, Depends
 
-# exceptions
-from fastapi.exceptions import HTTPException
-
 # pagination
 from fastapi_pagination import Page
 from fastapi_pagination.ext.async_sqlalchemy import paginate
@@ -35,16 +32,6 @@ router = APIRouter(
     prefix="/publishers",
     tags=["Publisher"],
     dependencies=[Depends(get_session)],
-)
-
-STATUS_404 = HTTPException(
-    404,
-    detail=[
-        {
-            "msg": "No such publisher.",
-            "type": "not_found.publisher",
-        }
-    ],
 )
 
 

@@ -1,9 +1,6 @@
 # API
 from fastapi import APIRouter, Depends
 
-# exceptions
-from fastapi.exceptions import HTTPException
-
 # pagination
 from fastapi_pagination import Page
 from fastapi_pagination.ext.async_sqlalchemy import paginate

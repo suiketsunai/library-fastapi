@@ -1,4 +1,4 @@
-# http statuts, dependency
+# dependency and http status
 from fastapi import Depends, status
 
 # exceptions
@@ -10,23 +10,23 @@ from fastapi_filter.base.filter import BaseFilterModel, _list_to_str_fields
 # pydantic exception and model
 from pydantic import ValidationError, create_model
 
-# creating session
+# get sqlalchemy async session
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# get schema
+# database schemas
 from .db import schemas
 
 # database
 from .db.database import ASYNC_SESSION
 
 # define nor found response
-response_404 = {404: {"model": schemas.Message}}
+response_404 = {status.HTTP_404_NOT_FOUND: {"model": schemas.Message}}
 
 
 # raise 404
 async def raise_404(table: str):
     raise HTTPException(
-        404,
+        status.HTTP_404_NOT_FOUND,
         detail=[
             {
                 "msg": f"No such {table}.",
