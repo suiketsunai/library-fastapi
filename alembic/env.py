@@ -4,12 +4,6 @@ import logging
 from logging.config import fileConfig
 from typing import Optional
 
-# uuid generation
-from uuid import uuid4
-
-# asyncpg connection
-from asyncpg import Connection as APGConnection
-
 # sqlalchemy engine configuration
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.engine import Connection
@@ -21,7 +15,7 @@ from sqlalchemy.sql.schema import Column, Table
 from alembic import context
 
 # get connection URI
-from app.db.database import DATABASE_URL
+from app.db.database import DATABASE_URL, CustomConnection
 
 # get models Base
 from app.db.models import Base
@@ -30,12 +24,6 @@ VERSION_TABLE = "library_alembic"
 
 # get alembic migrations logger
 log = logging.getLogger("alembic.runtime.migration")
-
-
-class CConnection(APGConnection):
-    def _get_unique_id(self, prefix: str) -> str:
-        return f"__asyncpg_{prefix}_{uuid4()}__"
-
 
 # do not drop tables if unknown to alembic
 def include_object(
@@ -140,7 +128,7 @@ async def run_migrations_online() -> None:
             connect_args={
                 "statement_cache_size": 0,
                 "prepared_statement_cache_size": 0,
-                "connection_class": CConnection,
+                "connection_class": CustomConnection,
             },
         ),
     )
