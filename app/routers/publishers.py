@@ -1,6 +1,13 @@
 # API
 from fastapi import APIRouter, Depends
 
+# exceptions
+from fastapi.exceptions import HTTPException
+
+# pagination
+from fastapi_pagination import Page
+from fastapi_pagination.ext.async_sqlalchemy import paginate
+
 # get sqlalchemy functions
 from sqlalchemy import select
 
@@ -10,13 +17,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # get sqlalchemy loading strategy
 from sqlalchemy.orm import selectinload
 
-# pagination
-from fastapi_pagination import Page
-from fastapi_pagination.ext.async_sqlalchemy import paginate
-
-# filter dependency
-from fastapi_filter import FilterDepends
-
 # database models and schemas
 from ..db import models, schemas
 
@@ -24,8 +24,7 @@ from ..db import models, schemas
 from ..db.filters import PublisherFilter
 
 # other dependencies
-from ..dependencies import error_json_response, get_session, response_404
-
+from ..dependencies import CustomFilterDepends, get_session, response_404
 
 router = APIRouter(
     prefix="/publishers",
@@ -33,14 +32,23 @@ router = APIRouter(
     dependencies=[Depends(get_session)],
 )
 
+STATUS_404 = HTTPException(
+    404,
+    detail=[
+        {
+            "msg": "No such publisher.",
+            "type": "not_found.publisher",
+        }
+    ],
+)
+
 
 @router.get(
     "/",
     response_model=Page[schemas.Publisher_Books],
-    responses=response_404,
 )
 async def read_publishers(
-    _filter: PublisherFilter = FilterDepends(PublisherFilter),
+    _filter: PublisherFilter = CustomFilterDepends(PublisherFilter),
     session: AsyncSession = Depends(get_session),
 ):
     return await paginate(
@@ -73,11 +81,7 @@ async def read_publisher(
             )
         )
     ) is None:
-        return error_json_response(
-            404,
-            "No such publisher",
-            "not_found.publisher",
-        )
+        raise STATUS_404
     return publisher
 
 
@@ -112,11 +116,7 @@ async def update_publisher(
             with_for_update=True,
         )
     ) is None:
-        return error_json_response(
-            404,
-            "No such publisher",
-            "not_found.publisher",
-        )
+        raise STATUS_404
     for key, value in publisher:
         setattr(updated_publisher, key, value)
     await session.commit()
@@ -140,11 +140,7 @@ async def patch_publisher(
             with_for_update=True,
         )
     ) is None:
-        return error_json_response(
-            404,
-            "No such publisher",
-            "not_found.publisher",
-        )
+        raise STATUS_404
     for key, value in publisher.dict(exclude_none=True).items():
         setattr(patched_publisher, key, value)
     await session.commit()
@@ -168,11 +164,7 @@ async def delete_publisher(
             with_for_update=True,
         )
     ) is None:
-        return error_json_response(
-            404,
-            "No such publisher",
-            "not_found.publisher",
-        )
+        raise STATUS_404
     await session.delete(deleted_publisher)
     await session.commit()
     return deleted_publisher

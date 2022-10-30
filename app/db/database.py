@@ -18,6 +18,7 @@ DATABASE_URL = URL.create(
 ASYNC_ENGINE = create_async_engine(
     DATABASE_URL,
     echo=True,
+    pool_pre_ping=True,
 )
 
 ASYNC_SESSION = sessionmaker(
