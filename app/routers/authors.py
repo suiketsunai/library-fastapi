@@ -18,7 +18,7 @@ from sqlalchemy.orm import selectinload
 from ..db import models, schemas
 
 # author filter
-from ..db.filters import AuthorFilter
+from ..db.filters import AuthorFilter, BookFilter
 
 # other dependencies
 from ..dependencies import (
@@ -158,3 +158,27 @@ async def delete_author(
     await session.delete(deleted_author)
     await session.commit()
     return deleted_author
+
+
+@router.get(
+    "/{author_id}/books",
+    response_model=Page[schemas.Book_Publisher],
+    responses=response_404,
+)
+async def read_author_books(
+    author_id: int,
+    _filter: BookFilter = CustomFilterDepends(BookFilter),
+    session: AsyncSession = Depends(get_session),
+):
+    if not (author := (await session.get(models.Author, author_id))):
+        await raise_404("author")
+    return await paginate(
+        session,
+        _filter.sort(
+            _filter.filter(
+                select(models.Book)
+                .where(models.Book.authors.contains(author))
+                .options(selectinload(models.Book.publisher))
+            )
+        ),
+    )
