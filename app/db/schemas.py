@@ -55,6 +55,12 @@ class AuthorCreate(AuthorBase):
     pass
 
 
+class AuthorPatch(AuthorBase):
+    first_name: Optional[str]
+    last_name: Optional[str]
+    middle_name: Optional[str]
+
+
 class Author(AuthorBase, AuthorAuto):
     class Config:
         orm_mode = True

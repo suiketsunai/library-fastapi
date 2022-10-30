@@ -24,7 +24,12 @@ from ..db import models, schemas
 from ..db.filters import PublisherFilter
 
 # other dependencies
-from ..dependencies import CustomFilterDepends, get_session, response_404
+from ..dependencies import (
+    CustomFilterDepends,
+    get_session,
+    raise_404,
+    response_404,
+)
 
 router = APIRouter(
     prefix="/publishers",
@@ -81,7 +86,7 @@ async def read_publisher(
             )
         )
     ) is None:
-        raise STATUS_404
+        await raise_404("publisher")
     return publisher
 
 
@@ -116,7 +121,7 @@ async def update_publisher(
             with_for_update=True,
         )
     ) is None:
-        raise STATUS_404
+        await raise_404("publisher")
     for key, value in publisher:
         setattr(updated_publisher, key, value)
     await session.commit()
@@ -140,7 +145,7 @@ async def patch_publisher(
             with_for_update=True,
         )
     ) is None:
-        raise STATUS_404
+        await raise_404("publisher")
     for key, value in publisher.dict(exclude_none=True).items():
         setattr(patched_publisher, key, value)
     await session.commit()
@@ -164,7 +169,7 @@ async def delete_publisher(
             with_for_update=True,
         )
     ) is None:
-        raise STATUS_404
+        await raise_404("publisher")
     await session.delete(deleted_publisher)
     await session.commit()
     return deleted_publisher

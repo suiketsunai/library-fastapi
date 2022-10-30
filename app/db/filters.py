@@ -13,7 +13,7 @@ from . import models
 def check_fields(banned_fields: list[str], fields: list[str]):
     for field in fields:
         if field.replace("+", "").replace("-", "") in banned_fields:
-            raise ValueError(f"You can't sort by: {', '.join(banned_fields)}")
+            raise ValueError(f"You can't sort by: {', '.join(banned_fields)}.")
     return fields
 
 

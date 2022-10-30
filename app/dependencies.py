@@ -22,6 +22,20 @@ from .db.database import ASYNC_SESSION
 # define nor found response
 response_404 = {404: {"model": schemas.Message}}
 
+
+# raise 404
+async def raise_404(table: str):
+    raise HTTPException(
+        404,
+        detail=[
+            {
+                "msg": f"No such {table}.",
+                "type": f"not_found.{table}",
+            }
+        ],
+    )
+
+
 # get async session
 async def get_session() -> AsyncSession:
     async with ASYNC_SESSION() as session:

@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi_pagination import add_pagination
 
 # event router
-from .routers import events, publishers
+from .routers import authors, events, publishers
 
 app = FastAPI()
 
@@ -28,6 +28,7 @@ async def validation_exception_handler(_, exc):
 
 app.include_router(events.router)
 app.include_router(publishers.router)
+app.include_router(authors.router)
 
 
 @app.get("/", include_in_schema=False)
